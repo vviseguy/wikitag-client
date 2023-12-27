@@ -1,0 +1,15 @@
+{
+    "name": "WikiTag",
+    "description": "Tag. You're it. Also, you lost the game.",
+    "version": "1.0",
+    "manifest_version": 3,
+    "action": {
+        "default_title": "Wiki-patya"
+      },
+    "content_scripts": [
+        {
+        "matches": ["<all_urls>"],
+        "js": ["background.js"]
+        }
+      ]
+}
