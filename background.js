@@ -1,11 +1,12 @@
-const nonce = "AJAFFJEAJRajndg"
+const nonce = "AJAFFJEAJRajndg";
+const username = "soupa-h3r0";
 
 // Create your HTML content here
 const htmlToInsert = `<div id="inserted-element-${nonce}">#</div>`;
 
 // Define your CSS rules within the style block
 const cssRules = `
-  /** BEGIN INSERTED JS **/
+  /** BEGIN INSERTED CSS **/
   #inserted-element-${nonce}{
       width: 1lh; 
       height: 100%;
@@ -17,7 +18,7 @@ const cssRules = `
       margin-left: 5px;
       cursor:pointer;
   }
-  /** END INSERTED JS **/
+  /** END INSERTED CSS **/
 `;
 function checkDomain(){
   switch(window.location.origin){
@@ -31,11 +32,20 @@ function checkDomain(){
 function checkHref(href){
   return href && 
         (href.startsWith("/") || href.startsWith(window.location.origin)) && 
+        href !== window.location.pathname &&
         href.match(":[^/]")==null;
 }
 
+function extractPath(hrefString){
+  // let rtrn = hrefString.match("(?:.{3})?/(.+)");
+  // if (rtrn == null) return null;
+  let string = hrefString.match("(?:[^\.]{3})?/(.+)")[1]; // only results following the .com/.org etc.
+  console.log(string);
+  return string.replaceAll("/","-");
+}
+
 // Function to insert HTML after <a> tags inside <main>, and style for the same
-function insertHTML() {
+async function insertHTML() {
   if (!checkDomain()) return;
 
   // only run function once
@@ -44,21 +54,30 @@ function insertHTML() {
 
   addStyle();
 
-  const anchorTags = document.querySelectorAll('main a');
+  let anchorTags = Array.from(document.querySelectorAll('main a[href]'));
+  anchorTags = anchorTags.filter((anchorTag) => checkHref(anchorTag.getAttribute("href"))); // process certain links as "valid" gameplay
+
+  links = anchorTags.map((anchorTag) => extractPath(anchorTag.getAttribute('href')));
+
+  const data = await fetch('http://localhost:3000/'+username+"/"+extractPath(window.location.pathname),{
+        method:"POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({neighbors:links})        
+      }).then((r)=>r.json());
+  console.log("response recieved!");
 
   anchorTags.forEach(async anchorTag => {
-    // Make sure to only append the element to links within the same (sub)domain.
-    const href = anchorTag.getAttribute('href');
-    if (checkHref(href)) {
+      if (!checkHref(anchorTag.getAttribute("href"))) return;
+
+      const link = extractPath(anchorTag.getAttribute('href'));
+      
       // Create a wrapper element to contain the HTML code
       const wrapper = document.createElement('div');
       wrapper.innerHTML = htmlToInsert;
 
-      const data = await fetch('https://random-data-api.com/api/v2/users').then((r)=>r.json());
-
       // Insert the HTML code after the <a> tag
-      anchorTag.parentNode.insertBefore(wrapper.firstChild, anchorTag.nextSibling).innerText = data.id%10??"Empty";
-    }
+      const insertedElement = anchorTag.parentNode.insertBefore(wrapper.firstChild, anchorTag.nextSibling);
+      insertedElement.innerText = data[link]??"#";
   });
 }
 
