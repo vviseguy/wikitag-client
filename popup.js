@@ -63,18 +63,22 @@ function hidePreviousRoom() {
 }
 
 async function tellServiceWorker(obj){
-    return await chrome.runtime.sendMessage(obj);
+    let response = await chrome.runtime.sendMessage(obj);
+    if (response.error) return new Error(response.message);
+    
+    return response;
 }
 
 // Function to join a room
 function joinRoom() {
     showLoadingScreen(); // Show loading screen
-    simulateResponse().then(() => {
+    const providedCode = document.getElementById('room-code').value;
+    tellServiceWorker({eventType:"join", roomCode:providedCode}).then((response) => {
 
         // Simulated response or actual logic to join the room
         // Logic to join room using entered username and room code
         const username = document.getElementById('username').value;
-        const roomCode = document.getElementById('room-code').value;
+        const roomCode = response.roomCode;
 
         // Hide previous page, show room page
         hidePreviousRoom();
@@ -94,12 +98,12 @@ function joinRoom() {
 // Function to create a room
 function createRoom() {
     showLoadingScreen(); // Show loading screen
-    tellServiceWorker({type:"join",roomCode:""}).then((obj) => {
+    tellServiceWorker({eventType:"create"}).then((response) => {
 
         // Simulated response or actual logic to create the room
         // Logic to create a room using entered username
         const username = document.getElementById('username').value;
-        const roomCode = obj.roomCode;
+        const roomCode = response.roomCode;
         // Hide previous page, show room page
         hidePreviousRoom();
         document.getElementById('room-page').classList.remove('hidden');
@@ -118,7 +122,7 @@ function createRoom() {
 // Function to start the game and display player's role
 async function startGame() {
     showLoadingScreen(); // Show loading screen
-    simulateResponse().then(async () => {
+    tellServiceWorker({eventType:"start"}).then(async () => {
 
         // For demonstration, setting a random role (modify as needed)
         const roles = ['Villager', 'Werewolf', 'Seer', 'Doctor'];
@@ -142,17 +146,29 @@ async function startGame() {
 
 // Function to end the game and close the extension
 function endGame() {
-    // Perform any necessary clean-up or end-game logic
+    showLoadingScreen(); // Show loading screen
+    tellServiceWorker({eventType:"leave"}).then(async () => {
 
-    // Close the extension window/tab (adjust based on the Chrome extension's specific close behavior)
-    window.close();
+        // Close the extension window/tab (adjust based on the Chrome extension's specific close behavior)
+        window.close();
+    }).catch(error => {
+        hideLoadingScreen(); // Hide loading screen on error
+        console.error('Error:', error);
+    });
 }
 
 // Function to sign out and go back to the join room page
 function signOut() {
-    // Hide previous page, show join room page
-    hidePreviousRoom(); // Hide previous room content
-    document.getElementById('join-room-page').classList.remove('hidden');
+    showLoadingScreen(); // Show loading screen
+    tellServiceWorker({eventType:"sign-out"}).then(async () => {
+
+        // Hide previous page, show join room page
+        hidePreviousRoom(); // Hide previous room content
+        document.getElementById('join-room-page').classList.remove('hidden');
+    }).catch(error => {
+        hideLoadingScreen(); // Hide loading screen on error
+        console.error('Error:', error);
+    });
 }
 
 // Attach event listeners for onclick attributes

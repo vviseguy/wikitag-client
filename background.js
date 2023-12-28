@@ -35,8 +35,33 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // mock
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log(message.type+": "+message.roomCode);
-    sendResponse({ roomCode: "123456" });
+    console.log(message);
+    try {
+        switch(message.eventType){
+            case "sign-in":
+                sendResponse({ });
+                break;
+            case "leave":
+            case "sign-out":
+                sendResponse({ })
+                break;
+            case "join":
+                sendResponse({ roomCode: message.roomCode });
+                break;
+            case "create":
+                sendResponse({ roomCode: "123456" });
+                break;
+            case "begin":
+                sendResponse({ });
+                break;
+            default:
+                throw new Error("Service Worker: Invalid chrome runtime message\n" + e);
+        }
+    }
+    catch(e){
+        sendResponse({ error: true, message:e });
+    }
+    
     return true;
 });
 // much thanks to https://stackoverflow.com/questions/74330556/chrome-extension-how-to-interact-between-the-main-extension-popup-default-pop
