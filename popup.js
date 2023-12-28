@@ -1,6 +1,6 @@
 // Logic to populate player list and start game button functionality (you need to implement this)
 // This might involve using Chrome's messaging API for communication between extension pages or content scripts
-
+let username, roomCode;
 let addPlayerListener;
 let removePlayerListener;
 // Example function to add players to the list (replace it with actual logic)
@@ -57,16 +57,53 @@ function hideLoadingScreen() {
 
 // Function to hide the previous room content
 function hidePreviousRoom() {
+    document.getElementById('sign-in-page').classList.add('hidden');
     document.getElementById('join-room-page').classList.add('hidden');
     document.getElementById('room-page').classList.add('hidden');
     document.getElementById('game-page').classList.add('hidden');
 }
 
+// Function to send messages to the Service Worker
 async function tellServiceWorker(obj){
     let response = await chrome.runtime.sendMessage(obj);
     if (response.error) return new Error(response.message);
     
     return response;
+}
+
+// Function to set username globally
+function setUsername(username){
+    Array.from(document.getElementsByClassName('display-username'))
+            .forEach((el) => el.innerText = username);
+}
+// Function to set roomCode globally
+function setRoomCode(roomCode){
+    Array.from(document.getElementsByClassName('display-room-code'))
+            .forEach((el) => el.innerText = roomCode || 'No room code');
+}
+
+// Function to sign in
+function signIn() {
+    showLoadingScreen(); // Show loading screen
+
+    const providedName = document.getElementById('username').value;
+    tellServiceWorker({eventType:"sign-in", username:providedName}).then((response) => {
+
+        // Logic to sign in using entered username
+        username = response.username;
+
+        // Hide previous page, show room page
+        hidePreviousRoom();
+        document.getElementById('join-room-page').classList.remove('hidden');
+
+        // Update username everywhere on page
+        setUsername(username);
+        
+        hideLoadingScreen(); // Hide loading screen after response
+    }).catch(error => {
+        hideLoadingScreen(); // Hide loading screen on error
+        console.error('Error:', error);
+    });
 }
 
 // Function to join a room
@@ -75,19 +112,16 @@ function joinRoom() {
     const providedCode = document.getElementById('room-code').value;
     tellServiceWorker({eventType:"join", roomCode:providedCode}).then((response) => {
 
-        // Simulated response or actual logic to join the room
-        // Logic to join room using entered username and room code
-        const username = document.getElementById('username').value;
-        const roomCode = response.roomCode;
+        // Logic to join the room
+        roomCode = response.roomCode;
 
         // Hide previous page, show room page
         hidePreviousRoom();
         document.getElementById('room-page').classList.remove('hidden');
 
-        // Display username and room code in the room page
-        document.getElementById('display-username').innerText = username;
-        document.getElementById('display-room-code').innerText = roomCode || 'No room code';
-
+        // Update the roomCode everywhere on page
+        setRoomCode(roomCode);
+        
         hideLoadingScreen(); // Hide loading screen after response
     }).catch(error => {
         hideLoadingScreen(); // Hide loading screen on error
@@ -100,17 +134,15 @@ function createRoom() {
     showLoadingScreen(); // Show loading screen
     tellServiceWorker({eventType:"create"}).then((response) => {
 
-        // Simulated response or actual logic to create the room
-        // Logic to create a room using entered username
-        const username = document.getElementById('username').value;
-        const roomCode = response.roomCode;
+        // Logic to process newly created room
+        roomCode = response.roomCode;
+
         // Hide previous page, show room page
         hidePreviousRoom();
         document.getElementById('room-page').classList.remove('hidden');
 
-        // Display username in the room page
-        document.getElementById('display-username').innerText = username;
-        document.getElementById('display-room-code').innerText = roomCode;
+        // Update the roomCode everywhere on page
+        setRoomCode(roomCode);
 
         hideLoadingScreen(); // Hide loading screen after response
     }).catch(error => {
@@ -119,14 +151,25 @@ function createRoom() {
     });
 }
 
-// Function to start the game and display player's role
-async function startGame() {
+// Function to start the game
+async function activateGame() {
     showLoadingScreen(); // Show loading screen
     tellServiceWorker({eventType:"start"}).then(async () => {
+        // see startGame()
+    }).catch(error => {
+        hideLoadingScreen(); // Hide loading screen on error
+        console.error('Error:', error);
+    });
+}
+
+// Function to react to start game event
+async function beginGame(roleList) {
+    showLoadingScreen(); // Show loading screen
+    try {
 
         // For demonstration, setting a random role (modify as needed)
         const roles = ['Villager', 'Werewolf', 'Seer', 'Doctor'];
-        const randomRole = roles[Math.floor(Math.random() * roles.length)];
+        const randomRole = roleList[username] || roles[Math.floor(Math.random() * roles.length)];
         
         chrome.scripting.executeScript({
             target: { tabId: await chrome.tabs.query({active: true, currentWindow: true}).then((o)=>o[0].id) },
@@ -138,11 +181,13 @@ async function startGame() {
         document.getElementById('display-role').innerText = randomRole;
         
         hideLoadingScreen(); // Hide loading screen after response
-    }).catch(error => {
+    }
+    catch(error){
         hideLoadingScreen(); // Hide loading screen on error
         console.error('Error:', error);
-    });
+    };
 }
+
 
 // Function to end the game and close the extension
 function endGame() {
@@ -164,7 +209,7 @@ function signOut() {
 
         // Hide previous page, show join room page
         hidePreviousRoom(); // Hide previous room content
-        document.getElementById('join-room-page').classList.remove('hidden');
+        document.getElementById('sign-in-page').classList.remove('hidden');
     }).catch(error => {
         hideLoadingScreen(); // Hide loading screen on error
         console.error('Error:', error);
@@ -172,9 +217,10 @@ function signOut() {
 }
 
 // Attach event listeners for onclick attributes
+document.getElementById('sign-in-button').addEventListener('click', signIn);
 document.getElementById('join-room-button').addEventListener('click', joinRoom);
 document.getElementById('create-room-button').addEventListener('click', createRoom);
-document.getElementById('start-game-button').addEventListener('click', startGame);
+document.getElementById('start-game-button').addEventListener('click', activateGame);
 document.getElementById('sign-out-button').addEventListener('click', signOut);
 document.getElementById('end-game-button').addEventListener('click', endGame);
 

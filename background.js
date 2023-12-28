@@ -39,7 +39,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     try {
         switch(message.eventType){
             case "sign-in":
-                sendResponse({ });
+                sendResponse({ username: message.username || "[Unnamed User]"});
                 break;
             case "leave":
             case "sign-out":

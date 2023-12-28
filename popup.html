@@ -41,8 +41,8 @@
       </div>
     </div>
 
-    <!-- Page for entering username and room code -->
-    <div id="join-room-page">
+    <!-- Page for entering username -->
+    <div id="sign-in-page">
       <div class="container mt-3">
         <h2>Wiki-tag</h2>
         <form id="join-room-form">
@@ -50,6 +50,17 @@
             <label for="username">Username:</label>
             <input type="text" class="form-control" id="username" required>
           </div>
+          <button type="button" class="btn btn-primary" id="sign-in-button">Sign-in</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Page for entering room code -->
+    <div id="join-room-page" class="hidden">
+      <div class="container mt-3">
+        <h2>Wiki-tag</h2>
+        <p>Username: <span class="display-username"></span></p>
+        <form id="join-room-form">
           <div class="form-group">
             <label for="room-code">Room Code (optional):</label>
             <input type="text" class="form-control" id="room-code">
@@ -64,8 +75,8 @@
     <div id="room-page" class="hidden">
       <div class="container mt-3">
         <h2>Room Details</h2>
-        <p>Username: <span id="display-username"></span></p>
-        <p>Room Code: <span id="display-room-code"></span></p>
+        <p>Username: <span class="display-username"></span></p>
+        <p>Room Code: <span class="display-room-code"></span></p>
         <h3>Players:</h3>
         <ul id="player-list"></ul>
         <button type="button" class="btn btn-warning" id="start-game-button">Start Game</button>
@@ -76,6 +87,8 @@
     <!-- Page for the game session -->
     <div id="game-page" class="hidden">
       <div class="container mt-3">
+        <p>Username: <span class="display-username"></span></p>
+        <p>Room Code: <span class="display-room-code"></span></p>
         <h2>Your Role</h2>
         <p>Your role is: <span id="display-role"></span></p>
         <button type="button" class="btn btn-danger" id="end-game-button">End Game</button>
