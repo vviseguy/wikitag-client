@@ -31,6 +31,16 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // send player updates
 
+// on join without room code, create room
+
+// mock
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log(message.type+": "+message.roomCode);
+    sendResponse({ roomCode: "123456" });
+    return true;
+});
+// much thanks to https://stackoverflow.com/questions/74330556/chrome-extension-how-to-interact-between-the-main-extension-popup-default-pop
+
 // chrome.action.onClicked.addListener((tab) => {
 //     chrome.scripting.executeScript({
 //       target: { tabId: tab.id },
@@ -43,8 +53,9 @@ chrome.runtime.onInstalled.addListener(() => {
 //     //   }).then(() => console.log("script injected in all frames"));
 // });
 
+// prove that service workers can make POST requests
 // fetch('http://localhost:3000/hi/hi',{
-// method:"POST",
-// headers: {"Content-Type": "application/json"},
-// body: JSON.stringify({neighbors:"hi"})        
+//     method:"POST",
+//     headers: {"Content-Type": "application/json"},
+//     body: JSON.stringify({neighbors:["hi"]})        
 // }).then((r)=>r.json());
